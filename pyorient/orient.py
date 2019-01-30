@@ -9,6 +9,7 @@ __author__ = 'Ostico <ostico@gmail.com>'
 import socket
 import struct
 import select
+import logging
 
 from .exceptions import PyOrientBadMethodCallException, \
     PyOrientConnectionException, PyOrientWrongProtocolVersionException, \
@@ -22,6 +23,7 @@ from .constants import FIELD_SHORT, \
 from .serializations import OrientSerialization
 
 from .utils import dlog
+logger = logging.getLogger(__name__)
 
 type_map = {'BOOLEAN' :0,
             'INTEGER' :1,
@@ -97,10 +99,13 @@ class OrientSocket(object):
                 )
 
             self.protocol = struct.unpack('!h', _value)[0]
-            if self.protocol > SUPPORTED_PROTOCOL:
-                raise PyOrientWrongProtocolVersionException(
-                    "Protocol version " + str(self.protocol) +
-                    " is not supported yet by this client.", [])
+            if self.protocol != SUPPORTED_PROTOCOL:
+                logger.warning(
+                    ("The Client driver version is different than Server "
+                     "version: client=%s, server=%s. "
+                     "You could not use the full features of the newer "
+                     "version. Assure to have the same versions on "
+                     "both"), SUPPORTED_PROTOCOL, self.protocol)
             self.connected = True
         except socket.error as e:
             self.connected = False
